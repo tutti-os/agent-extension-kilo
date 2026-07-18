@@ -175,10 +175,11 @@ rollout concerns and are intentionally not changed here.
 
 ## Artwork and trademark notice
 
-The canonical icon uses a transparent monochrome rendition of the official
+The conversation-row icon uses a transparent monochrome rendition of the official
 Kilo `KI/LO` provider mark from the fixed `Kilo-Org/kilocode` source for
 conversation masks. `sidebar-icon.svg` keeps the colorful yellow-and-black
-provider-switcher artwork; Tutti owns its outer clipping. The hero is original
+identity used by the Provider Rail, conversation headers, Message Center, and
+mentions; Tutti owns its outer clipping. The hero is original
 Tutti-maintained record-sleeve artwork inspired by Kilo's visual palette
 without altering the official mark. “Kilo Code” and
 related marks belong to their respective owners and are used only to identify
