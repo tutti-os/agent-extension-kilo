@@ -31,6 +31,15 @@
         "src": { "type": "string", "minLength": 1 }
       }
     },
+    "sidebarIcon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "src"],
+      "properties": {
+        "type": { "const": "asset" },
+        "src": { "type": "string", "minLength": 1 }
+      }
+    },
     "heroImage": {
       "type": "object",
       "additionalProperties": false,

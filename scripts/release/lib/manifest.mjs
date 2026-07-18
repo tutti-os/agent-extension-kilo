@@ -66,7 +66,6 @@ export async function validatePackage(packageDir, expectedAgentKey) {
   await validatePackageEntries(packageDir, "", declaredPaths);
   return manifest;
 }
-
 export function validateManifest(manifest, expectedAgentKey) {
   if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
     throw new Error("agent manifest must be an object");
@@ -80,6 +79,7 @@ export function validateManifest(manifest, expectedAgentKey) {
       "name",
       "description",
       "icon",
+      "sidebarIcon",
       "heroImage",
       "runtime",
       "profiles",
@@ -105,6 +105,9 @@ export function validateManifest(manifest, expectedAgentKey) {
   requireString(manifest.name, "manifest name");
   requireString(manifest.description, "manifest description");
   validateIcon(manifest.icon);
+  if (manifest.sidebarIcon !== undefined) {
+    validateSidebarIcon(manifest.sidebarIcon);
+  }
   validateHeroImage(manifest.heroImage);
   validateRuntime(manifest.runtime);
   validateProfiles(manifest.profiles);
@@ -130,6 +133,14 @@ function validateHeroImage(heroImage) {
   }
   rejectUnknownKeys(heroImage, new Set(["type", "src"]), "manifest heroImage");
   requireRelativePath(heroImage.src, "manifest heroImage.src");
+}
+
+function validateSidebarIcon(sidebarIcon) {
+  if (!sidebarIcon || typeof sidebarIcon !== "object" || sidebarIcon.type !== "asset") {
+    throw new Error("manifest sidebarIcon.type must be asset");
+  }
+  rejectUnknownKeys(sidebarIcon, new Set(["type", "src"]), "manifest sidebarIcon");
+  requireRelativePath(sidebarIcon.src, "manifest sidebarIcon.src");
 }
 
 function validateRuntime(runtime) {
@@ -272,6 +283,7 @@ function validateLocalizationInfo(localizationInfo) {
 async function validateReferencedFiles(packageDir, manifest) {
   const references = [
     [manifest.icon.src, null, "manifest icon"],
+    ...(manifest.sidebarIcon ? [[manifest.sidebarIcon.src, null, "manifest sidebarIcon"]] : []),
     ...(manifest.heroImage ? [[manifest.heroImage.src, null, "manifest heroImage"]] : []),
     [manifest.localizationInfo.defaultFile, null, null],
     ...(manifest.localizationInfo.additionalLocales ?? []).map((entry) => [

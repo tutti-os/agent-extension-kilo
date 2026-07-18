@@ -41,6 +41,7 @@ MANIFEST_KEYS = {
     "name",
     "description",
     "icon",
+    "sidebarIcon",
     "heroImage",
     "runtime",
     "profiles",
@@ -546,6 +547,12 @@ def validate(root: Path) -> None:
         validate_presentation_asset(root, manifest.get("icon"), "icon"),
         validate_presentation_asset(root, manifest.get("heroImage"), "heroImage"),
     }
+    if manifest.get("sidebarIcon") is not None:
+        referenced_paths.add(
+            validate_presentation_asset(
+                root, manifest.get("sidebarIcon"), "sidebarIcon"
+            )
+        )
 
     profiles = manifest.get("profiles")
     if not isinstance(profiles, dict):

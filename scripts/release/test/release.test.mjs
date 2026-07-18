@@ -280,9 +280,12 @@ test("rejects oversized presentation assets", async () => {
 test("rejects content disguised as raster presentation assets", async () => {
   for (const extension of ["png", "jpg", "webp"]) {
     const packageDir = await temporaryFixture();
-    const source = path.join(packageDir, "assets", "hero-image.svg");
+    const manifest = JSON.parse(await readFile(path.join(packageDir, "tutti.agent.json"), "utf8"));
+    const source = path.join(packageDir, manifest.heroImage.src);
     const target = path.join(packageDir, "assets", `hero-image.${extension}`);
-    await rename(source, target);
+    if (source !== target) {
+      await rename(source, target);
+    }
     await writeFile(target, "not an image\n");
     await mutateManifest(packageDir, (manifest) => {
       manifest.heroImage.src = `assets/hero-image.${extension}`;

@@ -8,26 +8,23 @@
     "type": "asset",
     "src": "assets/icon.svg"
   },
+  "sidebarIcon": {
+    "type": "asset",
+    "src": "assets/sidebar-icon.svg"
+  },
   "heroImage": {
     "type": "asset",
-    "src": "assets/hero-image.svg"
+    "src": "assets/hero-image.jpg"
   },
   "runtime": {
     "kind": "standard-acp",
     "install": {
       "runner": "npm",
-      "args": [
-        "install",
-        "--prefix",
-        "${installRoot}",
-        "@kilocode/cli@7.4.11"
-      ]
+      "args": ["install", "--prefix", "${installRoot}", "@kilocode/cli@7.4.11"]
     },
     "launch": {
       "executable": "${installRoot}/node_modules/.bin/kilo",
-      "args": [
-        "acp"
-      ]
+      "args": ["acp"]
     }
   },
   "profiles": {

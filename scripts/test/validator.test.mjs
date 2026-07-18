@@ -188,9 +188,14 @@ async function mutateManifest(packageDir, mutation) {
 }
 
 async function replaceHeroWithFakeRaster(packageDir, extension) {
-  const source = path.join(packageDir, "assets", "hero-image.svg");
+  const manifest = JSON.parse(
+    await readFile(path.join(packageDir, "tutti.agent.json"), "utf8")
+  );
+  const source = path.join(packageDir, manifest.heroImage.src);
   const target = path.join(packageDir, "assets", `hero-image.${extension}`);
-  await rename(source, target);
+  if (source !== target) {
+    await rename(source, target);
+  }
   await writeFile(target, "not an image\n");
   await mutateManifest(packageDir, (manifest) => {
     manifest.heroImage.src = `assets/hero-image.${extension}`;

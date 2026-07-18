@@ -7,15 +7,15 @@ Kilo-specific runtime, provider enum, event parsing, or React code to Tutti.
 
 ## Identity and trust boundary
 
-| Contract | Value |
-| --- | --- |
-| Repository | `tutti-os/agent-extension-kilo` |
-| Agent key | `kilo` |
-| Tutti Agent Target | `extension:kilo` |
-| Open provider metadata | `acp:kilo` |
-| Extension version | `1.0.0` |
-| Signing key ID | `tutti-kilo-release-v1` |
-| Release base URL | `https://d1x7gb6wqsqmnm.cloudfront.net/tutti-agent-releases` |
+| Contract               | Value                                                        |
+| ---------------------- | ------------------------------------------------------------ |
+| Repository             | `tutti-os/agent-extension-kilo`                              |
+| Agent key              | `kilo`                                                       |
+| Tutti Agent Target     | `extension:kilo`                                             |
+| Open provider metadata | `acp:kilo`                                                   |
+| Extension version      | `1.0.0`                                                      |
+| Signing key ID         | `tutti-kilo-release-v1`                                      |
+| Release base URL       | `https://d1x7gb6wqsqmnm.cloudfront.net/tutti-agent-releases` |
 
 The v1 package manifest intentionally contains `agentKey`, not additional
 `provider` or `agentTargetId` fields. Tutti resolves the signed, fixed
@@ -175,12 +175,15 @@ rollout concerns and are intentionally not changed here.
 
 ## Artwork and trademark notice
 
-The icon and hero image are original, neutral, Tutti-maintained geometric
-artwork. They are not copied from Kilo assets and do not claim to be an official
-Kilo logo because redistribution permission for an official identity asset was
-not established for this package. “Kilo Code” and related marks belong to their
-respective owners and are used only to identify compatibility with the
-official runtime. Both packaged SVGs are local, passive, and below 256 KiB.
+The canonical icon uses a transparent monochrome rendition of the official
+Kilo `KI/LO` provider mark from the fixed `Kilo-Org/kilocode` source for
+conversation masks. `sidebar-icon.svg` keeps the colorful yellow-and-black
+provider-switcher artwork; Tutti owns its outer clipping. The hero is original
+Tutti-maintained record-sleeve artwork inspired by Kilo's visual palette
+without altering the official mark. “Kilo Code” and
+related marks belong to their respective owners and are used only to identify
+compatibility with the official runtime. Both assets are local, passive, and
+below 256 KiB.
 
 ## Known limits
 
