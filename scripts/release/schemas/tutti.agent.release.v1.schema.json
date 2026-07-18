@@ -20,7 +20,7 @@
     "schemaVersion": { "const": "tutti.agent.release.v1" },
     "agentKey": { "type": "string" },
     "version": { "type": "string" },
-    "manifest": { "$ref": "tutti.agent.manifest.v1.schema.json" },
+    "manifest": { "$ref": "tutti.agent.manifest.v2.schema.json" },
     "artifactUrl": { "type": "string", "format": "uri" },
     "artifactSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "artifactSizeBytes": { "type": "integer", "minimum": 1 },

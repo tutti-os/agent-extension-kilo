@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-MANIFEST_SCHEMA = "tutti.agent.manifest.v1"
+MANIFEST_SCHEMA = "tutti.agent.manifest.v2"
 PROFILE_SCHEMAS = {
     "discovery": "tutti.agent.discovery.v1",
     "tools": "tutti.agent.tools.v1",
@@ -41,7 +41,7 @@ MANIFEST_KEYS = {
     "name",
     "description",
     "icon",
-    "sidebarIcon",
+    "maskIcon",
     "heroImage",
     "runtime",
     "profiles",
@@ -547,10 +547,10 @@ def validate(root: Path) -> None:
         validate_presentation_asset(root, manifest.get("icon"), "icon"),
         validate_presentation_asset(root, manifest.get("heroImage"), "heroImage"),
     }
-    if manifest.get("sidebarIcon") is not None:
+    if manifest.get("maskIcon") is not None:
         referenced_paths.add(
             validate_presentation_asset(
-                root, manifest.get("sidebarIcon"), "sidebarIcon"
+                root, manifest.get("maskIcon"), "maskIcon"
             )
         )
 
