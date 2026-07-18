@@ -9,6 +9,7 @@ Keep this directory limited to declarative JSON, localized copy, passive local
 images, and package documentation. It must never contain a runtime binary,
 script, symlink, normalizer, renderer, or remote mutable asset.
 
-Keep `icon.svg` aligned with the official yellow-tile, black-`KI/LO` identity.
-`sidebar-icon.svg` may add provider-rail artwork; Tutti owns outer corner
-clipping.
+Keep `icon.svg` as the transparent, mask-safe conversation-row glyph.
+`sidebar-icon.svg` carries the colored yellow-tile, black-`KI/LO` identity
+shared by the Provider Rail, conversation headers, Message Center, and mentions;
+Tutti owns outer corner clipping.
