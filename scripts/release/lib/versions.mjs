@@ -56,7 +56,7 @@ export function validateVersions(document) {
     requireSemver(record.minTuttiVersion, "versions record minTuttiVersion");
     normalizeCapabilities(record.requiredHostCapabilities);
     normalizeStatus(record.status);
-    validateRelease(record.release);
+    validateIndexedRelease(record.release);
     if (record.release.agentKey !== document.agentKey || record.release.version !== record.version) {
       throw new Error("versions record identity must match its release");
     }
@@ -64,6 +64,43 @@ export function validateVersions(document) {
     seen.add(record.version);
   }
   return document;
+}
+
+function validateIndexedRelease(release) {
+  if (release?.manifest?.schemaVersion !== "tutti.agent.manifest.v1") {
+    return validateRelease(release);
+  }
+  if (release.schemaVersion !== "tutti.agent.release.v1") {
+    throw new Error("historical release schemaVersion must be tutti.agent.release.v1");
+  }
+  if (typeof release.agentKey !== "string") {
+    throw new Error("historical release agentKey is required");
+  }
+  requireSemver(release.version, "historical release version");
+  if (
+    release.manifest.agentKey !== release.agentKey ||
+    release.manifest.version !== release.version
+  ) {
+    throw new Error("historical release manifest identity must match release");
+  }
+  const artifactURL = new URL(String(release.artifactUrl ?? ""));
+  if (artifactURL.protocol !== "https:") {
+    throw new Error("historical release artifactUrl must use HTTPS");
+  }
+  if (!/^[a-f0-9]{64}$/iu.test(release.artifactSha256)) {
+    throw new Error("historical release artifactSha256 must be a SHA-256 hex digest");
+  }
+  if (!Number.isSafeInteger(release.artifactSizeBytes) || release.artifactSizeBytes <= 0) {
+    throw new Error("historical release artifactSizeBytes must be positive");
+  }
+  if (
+    release.signature?.algorithm !== "ed25519" ||
+    typeof release.signature.keyId !== "string" ||
+    typeof release.signature.value !== "string"
+  ) {
+    throw new Error("historical release signature is invalid");
+  }
+  return release;
 }
 
 function normalizeCapabilities(value) {
