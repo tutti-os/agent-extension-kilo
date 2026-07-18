@@ -1,0 +1,8 @@
+{
+  "agent.name": "Kilo Code",
+  "agent.description": "通过标准 ACP 使用 Kilo Code",
+  "runtime.install.title": "为 Tutti 安装 Kilo Code",
+  "runtime.install.description": "仅在 Tutti 管理的运行时目录安装 @kilocode/cli@7.4.11。",
+  "runtime.authRequired": "没有凭据也能创建会话，但发送 prompt 需要登录 Kilo 或配置可用的 AI provider。请先在终端运行 `kilo auth login`，或完成 provider 配置。",
+  "runtime.networkRequired": "首次启动 ACP 时可能需要访问 models.dev 以加载模型目录。"
+}

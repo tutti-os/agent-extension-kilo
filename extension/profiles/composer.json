@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "tutti.agent.composer.v1",
+  "model": {
+    "source": "acp-session-models"
+  },
+  "permission": {
+    "source": "acp-session-modes"
+  },
+  "permissionModes": [],
+  "skills": {
+    "invocation": "textTrigger",
+    "triggerPrefix": "/",
+    "roots": [
+      {
+        "scope": "workspace",
+        "path": ".kilo/skills"
+      },
+      {
+        "scope": "workspace",
+        "path": ".kilocode/skills"
+      },
+      {
+        "scope": "workspace",
+        "path": ".agents/skills"
+      },
+      {
+        "scope": "workspace",
+        "path": ".claude/skills"
+      },
+      {
+        "scope": "user",
+        "path": ".agents/skills"
+      },
+      {
+        "scope": "user",
+        "path": ".claude/skills"
+      }
+    ]
+  }
+}

@@ -1,4 +1,12 @@
 node_modules/
 build/
 dist/
+.pnpm-store/
+__pycache__/
+*.py[cod]
+*.cache
+.cache/
+.tmp/
+tmp/
+temp/
 .DS_Store

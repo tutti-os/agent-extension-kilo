@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "tutti.agent.discovery.v1",
+  "candidates": [
+    {
+      "binaryNames": [
+        "kilo",
+        "kilocode"
+      ],
+      "version": {
+        "args": [
+          "--version"
+        ],
+        "constraint": ">=7.4.11 <8.0.0"
+      },
+      "launchArgs": [
+        "acp"
+      ],
+      "probe": {
+        "kind": "acp-initialize",
+        "timeoutMs": 5000
+      }
+    }
+  ]
+}

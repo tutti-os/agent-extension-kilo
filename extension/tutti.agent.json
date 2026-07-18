@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "tutti.agent.manifest.v1",
+  "agentKey": "kilo",
+  "version": "1.0.0",
+  "name": "Kilo Code",
+  "description": "Kilo Code CLI through the Agent Client Protocol",
+  "icon": {
+    "type": "asset",
+    "src": "assets/icon.svg"
+  },
+  "heroImage": {
+    "type": "asset",
+    "src": "assets/hero-image.svg"
+  },
+  "runtime": {
+    "kind": "standard-acp",
+    "install": {
+      "runner": "npm",
+      "args": [
+        "install",
+        "--prefix",
+        "${installRoot}",
+        "@kilocode/cli@7.4.11"
+      ]
+    },
+    "launch": {
+      "executable": "${installRoot}/node_modules/.bin/kilo",
+      "args": [
+        "acp"
+      ]
+    }
+  },
+  "profiles": {
+    "discovery": "profiles/discovery.json",
+    "tools": "profiles/tools.json",
+    "capabilities": "profiles/capabilities.json",
+    "composer": "profiles/composer.json"
+  },
+  "localizationInfo": {
+    "defaultLocale": "en",
+    "defaultFile": "locales/en.json",
+    "additionalLocales": [
+      {
+        "locale": "zh-CN",
+        "file": "locales/zh-CN.json"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "agent.name": "Kilo Code",
+  "agent.description": "Kilo Code CLI through the Agent Client Protocol",
+  "runtime.install.title": "Install Kilo Code for Tutti",
+  "runtime.install.description": "Installs @kilocode/cli@7.4.11 only in Tutti's managed runtime directory.",
+  "runtime.authRequired": "A session can open without credentials, but prompts require Kilo login or a configured AI provider. Run `kilo auth login` in a terminal or configure a provider before sending prompts.",
+  "runtime.networkRequired": "The first ACP startup may need access to models.dev to load the model catalog."
+}
