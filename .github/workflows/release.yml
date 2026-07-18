@@ -1,0 +1,242 @@
+name: Publish Agent Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Immutable extension version
+        required: true
+        default: "1.0.0"
+      min_tutti_version:
+        description: Oldest verified Tutti version that accepts this package contract
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  AGENT_KEY: kilo
+  MIN_TUTTI_VERSION: ${{ inputs.min_tutti_version }}
+  SIGNING_KEY_ID: tutti-kilo-release-v1
+  S3_PREFIX: tutti-agent-releases
+  RELEASE_ASSETS_BASE_URL: https://d1x7gb6wqsqmnm.cloudfront.net/tutti-agent-releases
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: tutti-agent-extension-${{ vars.TUTTI_AGENT_RELEASES_S3_BUCKET }}-kilo
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.11.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.TUTTI_AGENT_RELEASES_AWS_ROLE_ARN }}
+          aws-region: ${{ vars.TUTTI_AGENT_RELEASES_AWS_REGION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run repository checks
+        run: pnpm check
+
+      - name: Build extension package
+        env:
+          TUTTI_AGENT_EXTENSION_VERSION: ${{ inputs.version }}
+        run: pnpm package:tutti-agent
+
+      - name: Validate extension package
+        run: python3 scripts/validate_agent_extension.py build/tutti-agent/package
+
+      - name: Validate release inputs
+        run: |
+          node --input-type=module -e '
+            import semver from "semver";
+            if (!semver.valid(process.env.MIN_TUTTI_VERSION)) {
+              throw new Error(`min_tutti_version must be valid SemVer: ${process.env.MIN_TUTTI_VERSION}`);
+            }
+          '
+
+      - name: Build signed immutable release
+        env:
+          TUTTI_AGENT_EXTENSION_SIGNING_PRIVATE_KEY: ${{ secrets.TUTTI_AGENT_EXTENSION_SIGNING_PRIVATE_KEY }}
+        run: |
+          node scripts/release/bin/build-tutti-agent-extension-release.mjs \
+            --agent-key "${AGENT_KEY}" \
+            --package-dir build/tutti-agent/package \
+            --output-dir dist/tutti-agent-extension-release \
+            --version "${{ inputs.version }}" \
+            --base-url "${RELEASE_ASSETS_BASE_URL}" \
+            --published-at "$(git show -s --format=%cI HEAD)" \
+            --signing-key-id "${SIGNING_KEY_ID}"
+
+      - name: Publish immutable release
+        env:
+          BUCKET: ${{ vars.TUTTI_AGENT_RELEASES_S3_BUCKET }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          local_dir="dist/tutti-agent-extension-release/agents/${AGENT_KEY}/${VERSION}"
+          remote_prefix="${S3_PREFIX:+${S3_PREFIX}/}agents/${AGENT_KEY}/${VERSION}"
+          for name in "${AGENT_KEY}-${VERSION}.zip" release.json; do
+            key="${remote_prefix}/${name}"
+            if aws s3api head-object --bucket "${BUCKET}" --key "${key}" >/dev/null 2>&1; then
+              aws s3api get-object --bucket "${BUCKET}" --key "${key}" "/tmp/${name}" >/dev/null
+              cmp "${local_dir}/${name}" "/tmp/${name}" || {
+                echo "Immutable object s3://${BUCKET}/${key} already exists with different content." >&2
+                exit 1
+              }
+            else
+              content_type="application/json"
+              if [[ "${name}" == *.zip ]]; then content_type="application/zip"; fi
+              aws s3api put-object \
+                --bucket "${BUCKET}" \
+                --key "${key}" \
+                --body "${local_dir}/${name}" \
+                --content-type "${content_type}" \
+                --cache-control "public,max-age=31536000,immutable" \
+                --if-none-match '*' >/dev/null
+            fi
+          done
+
+      - name: Update versions and latest metadata
+        env:
+          BUCKET: ${{ vars.TUTTI_AGENT_RELEASES_S3_BUCKET }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          root="dist/tutti-agent-extension-release/agents/${AGENT_KEY}"
+          release_file="${root}/${VERSION}/release.json"
+          versions_key="${S3_PREFIX:+${S3_PREFIX}/}agents/${AGENT_KEY}/versions.json"
+          latest_key="${S3_PREFIX:+${S3_PREFIX}/}agents/${AGENT_KEY}/latest.json"
+          for attempt in 1 2 3 4 5; do
+            rm -f /tmp/existing-versions.json
+            etag=""
+            if head_json="$(aws s3api head-object --bucket "${BUCKET}" --key "${versions_key}" 2>/dev/null)"; then
+              etag="$(node -e 'const input=JSON.parse(process.argv[1]); process.stdout.write(input.ETag)' "${head_json}")"
+              aws s3api get-object --bucket "${BUCKET}" --key "${versions_key}" /tmp/existing-versions.json >/dev/null
+            fi
+            args=(
+              --release-file "${release_file}"
+              --min-tutti-version "${MIN_TUTTI_VERSION}"
+              --output "${root}/versions.json"
+            )
+            if [[ -n "${etag}" ]]; then args+=(--existing-versions /tmp/existing-versions.json); fi
+            node scripts/release/bin/build-tutti-agent-extension-versions.mjs "${args[@]}" >/dev/null
+            put_args=(
+              --bucket "${BUCKET}"
+              --key "${versions_key}"
+              --body "${root}/versions.json"
+              --content-type application/json
+              --cache-control no-cache
+            )
+            if [[ -n "${etag}" ]]; then put_args+=(--if-match "${etag}"); else put_args+=(--if-none-match '*'); fi
+            if aws s3api put-object "${put_args[@]}" >/dev/null; then break; fi
+            if [[ "${attempt}" == 5 ]]; then exit 1; fi
+          done
+          for attempt in 1 2 3 4 5; do
+            aws s3api get-object --bucket "${BUCKET}" --key "${versions_key}" /tmp/current-versions.json >/dev/null
+            node -e '
+              const fs = require("fs");
+              const versions = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              const active = versions.versions.find((entry) => entry.status === "active");
+              if (!active) throw new Error("versions index has no active release");
+              fs.writeFileSync(process.argv[2], `${JSON.stringify(active.release, null, 2)}\n`);
+            ' /tmp/current-versions.json "${root}/latest.json"
+            latest_etag=""
+            if head_json="$(aws s3api head-object --bucket "${BUCKET}" --key "${latest_key}" 2>/dev/null)"; then
+              latest_etag="$(node -e 'const input=JSON.parse(process.argv[1]); process.stdout.write(input.ETag)' "${head_json}")"
+            fi
+            latest_args=(
+              --bucket "${BUCKET}"
+              --key "${latest_key}"
+              --body "${root}/latest.json"
+              --content-type application/json
+              --cache-control no-cache
+            )
+            if [[ -n "${latest_etag}" ]]; then latest_args+=(--if-match "${latest_etag}"); else latest_args+=(--if-none-match '*'); fi
+            if aws s3api put-object "${latest_args[@]}" >/dev/null; then break; fi
+            if [[ "${attempt}" == 5 ]]; then exit 1; fi
+          done
+
+      - name: Invalidate mutable CDN metadata
+        if: ${{ vars.TUTTI_AGENT_RELEASES_CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        env:
+          DISTRIBUTION_ID: ${{ vars.TUTTI_AGENT_RELEASES_CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          invalidation_id="$(aws cloudfront create-invalidation \
+            --distribution-id "${DISTRIBUTION_ID}" \
+            --paths "/${S3_PREFIX:+${S3_PREFIX}/}agents/${AGENT_KEY}/latest.json" "/${S3_PREFIX:+${S3_PREFIX}/}agents/${AGENT_KEY}/versions.json" \
+            --query 'Invalidation.Id' \
+            --output text)"
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "${DISTRIBUTION_ID}" \
+            --id "${invalidation_id}"
+
+      - name: Verify public CDN bytes and signature
+        env:
+          VERSION: ${{ inputs.version }}
+          TUTTI_AGENT_EXTENSION_SIGNING_PRIVATE_KEY: ${{ secrets.TUTTI_AGENT_EXTENSION_SIGNING_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          verify_dir="/tmp/tutti-agent-extension-cdn-verify"
+          rm -rf "${verify_dir}"
+          mkdir -p "${verify_dir}"
+          release_url="${RELEASE_ASSETS_BASE_URL}/agents/${AGENT_KEY}/${VERSION}/release.json"
+          artifact_url="${RELEASE_ASSETS_BASE_URL}/agents/${AGENT_KEY}/${VERSION}/${AGENT_KEY}-${VERSION}.zip"
+          curl --fail --silent --show-error --retry 12 --retry-all-errors --retry-delay 5 \
+            "${release_url}" -o "${verify_dir}/release.json"
+          curl --fail --silent --show-error --retry 12 --retry-all-errors --retry-delay 5 \
+            "${artifact_url}" -o "${verify_dir}/${AGENT_KEY}-${VERSION}.zip"
+          node --input-type=module -e '
+            import { createPrivateKey, createPublicKey } from "node:crypto";
+            import { writeFileSync } from "node:fs";
+            const privateKey = createPrivateKey(process.env.TUTTI_AGENT_EXTENSION_SIGNING_PRIVATE_KEY.replace(/\\n/gu, "\n"));
+            writeFileSync(process.argv[1], createPublicKey(privateKey).export({ type: "spki", format: "pem" }));
+          ' "${verify_dir}/public.pem"
+          node scripts/release/bin/verify-tutti-agent-extension-release.mjs \
+            --release-file "${verify_dir}/release.json" \
+            --artifact "${verify_dir}/${AGENT_KEY}-${VERSION}.zip" \
+            --public-key-file "${verify_dir}/public.pem" \
+            --signing-key-id "${SIGNING_KEY_ID}"
+          for attempt in $(seq 1 30); do
+            curl --fail --silent --show-error \
+              "${RELEASE_ASSETS_BASE_URL}/agents/${AGENT_KEY}/versions.json" \
+              -o "${verify_dir}/versions.json"
+            curl --fail --silent --show-error \
+              "${RELEASE_ASSETS_BASE_URL}/agents/${AGENT_KEY}/latest.json" \
+              -o "${verify_dir}/latest.json"
+            if node --input-type=module -e '
+              import { readFileSync } from "node:fs";
+              const versions = JSON.parse(readFileSync(process.argv[1], "utf8"));
+              const latest = JSON.parse(readFileSync(process.argv[2], "utf8"));
+              if (latest.version !== process.env.VERSION ||
+                  !versions.versions.some((entry) => entry.version === process.env.VERSION && entry.status === "active")) {
+                process.exit(1);
+              }
+            ' "${verify_dir}/versions.json" "${verify_dir}/latest.json"; then
+              break
+            fi
+            if [[ "${attempt}" == 30 ]]; then
+              echo "Public mutable indexes did not expose ${AGENT_KEY}@${VERSION}." >&2
+              exit 1
+            fi
+            sleep 5
+          done
