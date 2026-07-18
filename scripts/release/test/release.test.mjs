@@ -39,7 +39,7 @@ test("builds a reproducible signed extension release", async () => {
     packageDir,
     outputDir: path.join(root, "out"),
     baseUrl: "https://example.test/tutti-agent-releases",
-    version: "2.0.0",
+    version: "2.0.1",
     signingKeyId: "tutti-kilo-release-v1",
     privateKey,
     publishedAt: "2026-07-14T00:00:00Z",
@@ -96,7 +96,7 @@ test("derives stable release metadata from the source commit", async () => {
     "--agent-key", "kilo",
     "--package-dir", packageDir,
     "--base-url", "https://example.test/tutti-agent-releases",
-    "--version", "2.0.0",
+    "--version", "2.0.1",
     "--signing-key-id", "tutti-kilo-release-v1",
     "--private-key-file", privateKeyPath
   ];
@@ -110,7 +110,7 @@ test("derives stable release metadata from the source commit", async () => {
     );
     assert.equal(result.status, 0, result.stderr);
   }
-  const relativeRelease = path.join("agents", "kilo", "2.0.0", "release.json");
+  const relativeRelease = path.join("agents", "kilo", "2.0.1", "release.json");
   const firstRelease = await readFile(path.join(firstOutput, relativeRelease));
   assert.deepEqual(await readFile(path.join(secondOutput, relativeRelease)), firstRelease);
   const release = JSON.parse(firstRelease);
