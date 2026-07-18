@@ -87,7 +87,7 @@ Fixed-source traceability:
   are declared without sufficient ACP payload or exact source evidence. Skills
   declare only fixed-source-proven local roots and `/` invocation; dynamic and
   URL-backed roots are omitted.
-- The packaged canonical and sidebar icons derive from the official
+- The packaged primary and mask icons derive from the official
   [`Kilo-Org/kilocode` `KI/LO` provider mark at commit `938919a`](https://github.com/Kilo-Org/kilocode/blob/938919ab72e3977d1512e0363417270e3337c7b1/packages/ui/src/assets/icons/provider/kilo.svg).
   The record-sleeve hero remains original Tutti-maintained artwork.
 - No Tutti trusted-source/public-key registration, feature flag, production

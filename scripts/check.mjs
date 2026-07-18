@@ -5,7 +5,7 @@ const root = path.resolve(import.meta.dirname, '..');
 execFileSync(process.execPath, [path.join(root, 'scripts', 'package.mjs')], { stdio: 'inherit' });
 const packageDir = path.join(root, 'build', 'tutti-agent', 'package');
 const manifest = JSON.parse(await readFile(path.join(packageDir, 'tutti.agent.json'), 'utf8'));
-if (manifest.schemaVersion !== 'tutti.agent.manifest.v1' || manifest.agentKey !== 'kilo') throw new Error('invalid manifest identity');
+if (manifest.schemaVersion !== 'tutti.agent.manifest.v2' || manifest.agentKey !== 'kilo') throw new Error('invalid manifest identity');
 if (Object.hasOwn(manifest, 'provider') || Object.hasOwn(manifest, 'agentTargetId')) throw new Error('host identity must not be added outside the v1 manifest contract');
 if (manifest.runtime.install.runner !== 'npm' || manifest.runtime.install.args.at(-1) !== '@kilocode/cli@7.4.11') throw new Error('runtime package must be exactly pinned');
 if (manifest.runtime.launch.executable !== '${installRoot}/node_modules/.bin/kilo' || JSON.stringify(manifest.runtime.launch.args) !== '["acp"]') throw new Error('invalid managed launch contract');

@@ -8,7 +8,7 @@ import {
   requireString
 } from "./format.mjs";
 
-export const manifestSchemaVersion = "tutti.agent.manifest.v1";
+export const manifestSchemaVersion = "tutti.agent.manifest.v2";
 export const profileSchemas = Object.freeze({
   discovery: "tutti.agent.discovery.v1",
   tools: "tutti.agent.tools.v1",
@@ -79,7 +79,7 @@ export function validateManifest(manifest, expectedAgentKey) {
       "name",
       "description",
       "icon",
-      "sidebarIcon",
+      "maskIcon",
       "heroImage",
       "runtime",
       "profiles",
@@ -105,8 +105,8 @@ export function validateManifest(manifest, expectedAgentKey) {
   requireString(manifest.name, "manifest name");
   requireString(manifest.description, "manifest description");
   validateIcon(manifest.icon);
-  if (manifest.sidebarIcon !== undefined) {
-    validateSidebarIcon(manifest.sidebarIcon);
+  if (manifest.maskIcon !== undefined) {
+    validateMaskIcon(manifest.maskIcon);
   }
   validateHeroImage(manifest.heroImage);
   validateRuntime(manifest.runtime);
@@ -135,12 +135,12 @@ function validateHeroImage(heroImage) {
   requireRelativePath(heroImage.src, "manifest heroImage.src");
 }
 
-function validateSidebarIcon(sidebarIcon) {
-  if (!sidebarIcon || typeof sidebarIcon !== "object" || sidebarIcon.type !== "asset") {
-    throw new Error("manifest sidebarIcon.type must be asset");
+function validateMaskIcon(maskIcon) {
+  if (!maskIcon || typeof maskIcon !== "object" || maskIcon.type !== "asset") {
+    throw new Error("manifest maskIcon.type must be asset");
   }
-  rejectUnknownKeys(sidebarIcon, new Set(["type", "src"]), "manifest sidebarIcon");
-  requireRelativePath(sidebarIcon.src, "manifest sidebarIcon.src");
+  rejectUnknownKeys(maskIcon, new Set(["type", "src"]), "manifest maskIcon");
+  requireRelativePath(maskIcon.src, "manifest maskIcon.src");
 }
 
 function validateRuntime(runtime) {
@@ -283,7 +283,7 @@ function validateLocalizationInfo(localizationInfo) {
 async function validateReferencedFiles(packageDir, manifest) {
   const references = [
     [manifest.icon.src, null, "manifest icon"],
-    ...(manifest.sidebarIcon ? [[manifest.sidebarIcon.src, null, "manifest sidebarIcon"]] : []),
+    ...(manifest.maskIcon ? [[manifest.maskIcon.src, null, "manifest maskIcon"]] : []),
     ...(manifest.heroImage ? [[manifest.heroImage.src, null, "manifest heroImage"]] : []),
     [manifest.localizationInfo.defaultFile, null, null],
     ...(manifest.localizationInfo.additionalLocales ?? []).map((entry) => [
