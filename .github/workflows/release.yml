@@ -6,10 +6,15 @@ on:
       version:
         description: Immutable extension version
         required: true
-        default: "2.0.1"
+        default: "2.0.2"
       min_tutti_version:
         description: Oldest verified Tutti version that accepts this package contract
         required: true
+        default: "0.0.0"
+      withdraw_versions:
+        description: Comma-separated historical extension versions to mark withdrawn in versions.json
+        required: false
+        default: "1.0.0"
 
 permissions:
   contents: read
@@ -138,6 +143,7 @@ jobs:
               --min-tutti-version "${MIN_TUTTI_VERSION}"
               --output "${root}/versions.json"
             )
+            if [[ -n "${{ inputs.withdraw_versions }}" ]]; then args+=(--withdraw-versions "${{ inputs.withdraw_versions }}"); fi
             if [[ -n "${etag}" ]]; then args+=(--existing-versions /tmp/existing-versions.json); fi
             node scripts/release/bin/build-tutti-agent-extension-versions.mjs "${args[@]}" >/dev/null
             put_args=(
