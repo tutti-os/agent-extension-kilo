@@ -41,7 +41,7 @@ test("preserves historical manifest v1 releases while indexing v2", () => {
   );
 });
 
-test("withdraws requested historical versions without changing release payloads", async (t) => {
+test("withdraws requested historical versions without retaining release payloads", async (t) => {
   const { mkdtemp, writeFile, readFile } = await import("node:fs/promises");
   const { join } = await import("node:path");
   const { tmpdir } = await import("node:os");
@@ -66,7 +66,12 @@ test("withdraws requested historical versions without changing release payloads"
   const historicalRelease = {
     ...release,
     version: "1.0.0",
-    manifest: { schemaVersion: "tutti.agent.manifest.v1", agentKey: manifest.agentKey, version: "1.0.0" },
+    manifest: {
+      schemaVersion: "tutti.agent.manifest.v1",
+      agentKey: manifest.agentKey,
+      version: "1.0.0",
+      sidebarIcon: { src: "assets/sidebar.svg", mimeType: "image/svg+xml" }
+    },
     artifactUrl: `https://example.test/agents/${manifest.agentKey}/1.0.0/${manifest.agentKey}-1.0.0.zip`
   };
   const existing = {
@@ -98,8 +103,5 @@ test("withdraws requested historical versions without changing release payloads"
 
   const versions = JSON.parse(await readFile(output, "utf8"));
   assert.equal(versions.versions.find((entry) => entry.version === "1.0.0").status, "withdrawn");
-  assert.deepEqual(
-    versions.versions.find((entry) => entry.version === "1.0.0").release,
-    historicalRelease
-  );
+  assert.equal("release" in versions.versions.find((entry) => entry.version === "1.0.0"), false);
 });

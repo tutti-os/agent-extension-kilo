@@ -57,6 +57,11 @@ export function validateVersions(document) {
     requireSemver(record.minTuttiVersion, "versions record minTuttiVersion");
     normalizeCapabilities(record.requiredHostCapabilities);
     normalizeStatus(record.status);
+    if (record.status === "withdrawn" && record.release == null) {
+      if (seen.has(record.version)) throw new Error(`duplicate version ${record.version}`);
+      seen.add(record.version);
+      continue;
+    }
     validateIndexedRelease(record.release);
     if (record.release.agentKey !== document.agentKey || record.release.version !== record.version) {
       throw new Error("versions record identity must match its release");
@@ -130,7 +135,8 @@ function normalizeStatus(value) {
 function withdrawVersionRecord(record, versions) {
   const withdrawn = normalizeWithdrawVersions(versions);
   if (!withdrawn.has(record.version)) return record;
-  return { ...record, status: "withdrawn" };
+  const { release: _release, ...withdrawnRecord } = record;
+  return { ...withdrawnRecord, status: "withdrawn" };
 }
 
 function normalizeWithdrawVersions(value) {

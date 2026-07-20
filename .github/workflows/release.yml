@@ -6,7 +6,7 @@ on:
       version:
         description: Immutable extension version
         required: true
-        default: "2.0.2"
+        default: "2.0.3"
       min_tutti_version:
         description: Oldest verified Tutti version that accepts this package contract
         required: true
