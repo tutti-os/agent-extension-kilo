@@ -37,6 +37,7 @@ export async function buildVersions(options) {
   document.versions = document.versions
     .filter((entry) => entry.version !== release.version)
     .concat(existing ?? record)
+    .map((entry) => withdrawVersionRecord(entry, options.withdrawVersions))
     .sort((left, right) => semver.rcompare(left.version, right.version));
   validateVersions(document);
   await writeJSON(outputPath, document);
@@ -124,4 +125,20 @@ function normalizeStatus(value) {
     throw new Error("status must be active or withdrawn");
   }
   return value;
+}
+
+function withdrawVersionRecord(record, versions) {
+  const withdrawn = normalizeWithdrawVersions(versions);
+  if (!withdrawn.has(record.version)) return record;
+  return { ...record, status: "withdrawn" };
+}
+
+function normalizeWithdrawVersions(value) {
+  const values = Array.isArray(value)
+    ? value
+    : String(value ?? "")
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+  return new Set(values.map((version) => requireSemver(version, "withdraw version")));
 }
